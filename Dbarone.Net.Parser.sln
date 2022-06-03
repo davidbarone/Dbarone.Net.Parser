@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dbarone.Net.Parser", "Dbarone.Net.Parser\Dbarone.Net.Parser.csproj", "{64992FF2-5FB7-4105-810F-612A55988FFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dbarone.Net.Parser.Tests", "Dbarone.Net.Parser.Tests\Dbarone.Net.Parser.Tests.csproj", "{29E95FCE-A722-4BE8-B73E-82195CBF97A2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{64992FF2-5FB7-4105-810F-612A55988FFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64992FF2-5FB7-4105-810F-612A55988FFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64992FF2-5FB7-4105-810F-612A55988FFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64992FF2-5FB7-4105-810F-612A55988FFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29E95FCE-A722-4BE8-B73E-82195CBF97A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29E95FCE-A722-4BE8-B73E-82195CBF97A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29E95FCE-A722-4BE8-B73E-82195CBF97A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29E95FCE-A722-4BE8-B73E-82195CBF97A2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
