@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dbarone.Net.Extensions.Collections" Version="1.0.1" />
+    <PackageReference Include="Dbarone.Net.Extensions.Collections" Version="1.0.2" />
   </ItemGroup>
 
 </Project>
