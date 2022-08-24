@@ -286,7 +286,7 @@ public class Parser : ILoggable
                 return list;
             }
         }
-        throw new Exception(string.Format("Syntax error near {0}...", input.Substring(0, 20)));
+        throw new Exception($"Syntax error near [{input.Substring(0, input.Length >= 50 ? 50 : input.Length)}...]");
     }
 
     /// <summary>
@@ -325,7 +325,7 @@ public class Parser : ILoggable
         }
 
         // should not get here...
-        throw new Exception("Input cannot be parsed.");
+        throw new Exception("Input cannot be parsed. No production rules match input.");
     }
 
     public override string ToString()
