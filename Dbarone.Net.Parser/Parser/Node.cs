@@ -75,7 +75,7 @@ public class Node
                     if (item as Token != null)
                     {
                         // token
-                        output += $"{indent}+- \"{key}\" {(item as Token)!.TokenName} [{(item as Token)!.TokenValue}]\n";
+                        output += $"{indent}+- \"{key}\" {(item as Token)!.TokenName} [{(item as Token)!.TokenValue}]{Environment.NewLine}";
                     }
                     else if (item as Node != null)
                     {
@@ -94,7 +94,7 @@ public class Node
                 if (child as Token != null)
                 {
                     // token
-                    output += $"{indent}+- \"{key}\" {(child as Token)!.TokenName} [{(child as Token)!.TokenValue}]\n";
+                    output += $"{indent}+- \"{key}\" {(child as Token)!.TokenName} [{(child as Token)!.TokenValue}]{Environment.NewLine}";
                 }
                 else if (child as Node != null)
                 {
