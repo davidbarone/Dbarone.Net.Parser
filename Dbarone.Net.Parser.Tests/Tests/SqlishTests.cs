@@ -14,6 +14,13 @@ public class Customer
     public string Rating { get; set; } = default!;
 }
 
+/// <summary>
+/// This test suite illustrates a very simple query language called Sqlish.
+/// This shows how a more complex grammar can be used to query & filter
+/// a dataset. Note that this is still a very simplistic example. For example
+/// the comparisons are done on a text basis - no type checking or other validation
+/// is done over a very simple syntax check of the query.
+/// </summary>
 public class SqlishTests : AbstractTests
 {
     List<Customer> data = new List<Customer>(){
@@ -199,22 +206,22 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                         switch (operatorTokenName)
                         {
                             case "EQ_OP":
-                                match = pi.GetValue(row) == value;
+                                match = (pi.GetValue(row).ToString()!.Equals(value));
                                 break;
                             case "NE_OP":
-                                match = pi.GetValue(row) != value;
+                                match = !pi.GetValue(row).ToString()!.Equals(value);
                                 break;
                             case "LT_OP":
-                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) < 0;
+                                match = pi.GetValue(row).ToString()!.CompareTo(value) < 0;
                                 break;
                             case "LE_OP":
-                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) <= 0;
+                                match = pi.GetValue(row).ToString()!.CompareTo(value) <= 0;
                                 break;
                             case "GT_OP":
-                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) > 0;
+                                match = pi.GetValue(row).ToString()!.CompareTo(value) > 0;
                                 break;
                             case "GE_OP":
-                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) >= 0;
+                                match = pi.GetValue(row).ToString()!.CompareTo(value) >= 0;
                                 break;
                         }
                         return match;
@@ -290,7 +297,7 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                 {
                     bool not = n.Properties.ContainsKey("NOT");
                     string column = (n.Properties["LHV"] as Token)!.TokenValue;
-                    string value = (n.Properties["RHV"]! as Token)!.TokenValue.Replace(@"""", "");
+                    string value = (n.Properties["RHV"]! as Token)!.TokenValue.Replace(@"'", "");
 
                     Func<Customer, bool> func = (row) =>
                     {
@@ -353,16 +360,31 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
     }
 
     [Fact]
-    public void CheckProductionRules(){
+    public void CheckProductionRules()
+    {
         var parser = new Parser(SqlishGrammar, "search_condition");
         var productionRules = parser.ProductionRules;
         Assert.Equal(46, productionRules.Count());
 
     }
 
+    /// <summary>
+    /// This test applies a Sqlish query to a dataset,
+    /// and checks the correct number of rows are returned back.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="expectedRows"></param>
     [Theory]
     [InlineData("Age BETWEEN 40 AND 60", 6)]
-    public void TestSqlish(string input, int expectedRows) {
+    [InlineData("Age EQ 26", 1)]
+    [InlineData("Rating ISBLANK", 1)]
+    [InlineData("Sex EQ 'F'", 7)]
+    [InlineData("Name CONTAINS 's'", 2)]
+    [InlineData("Name NOT CONTAINS 's'", 14)]
+    [InlineData("Country EQ 'UK' OR Name EQ 'david'", 4)]
+    [InlineData("(Country EQ 'UK' AND Sex EQ 'F') OR (Country EQ 'Italy')", 3)]
+    public void TestSqlish(string input, int expectedRows)
+    {
         var parser = new Parser(SqlishGrammar, "search_condition");
         var ast = parser.Parse(input);
         var visitor = SqlishVisitor;
