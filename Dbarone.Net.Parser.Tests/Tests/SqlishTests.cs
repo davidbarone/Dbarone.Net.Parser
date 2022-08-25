@@ -59,7 +59,7 @@ BETWEEN         = ""\bBETWEEN\b"";
 ISBLANK         = ""\bISBLANK\b"";
 NOT             = ""\bNOT\b"";
 LITERAL_STRING  = ""['][^']*[']"";
-LITERAL_NUMBER  = ""[+-]? ((\d+(\.\d*)?)|(\.\d+))"";
+LITERAL_NUMBER  = ""[+-]?((\d+(\.\d*)?)|(\.\d+))"";
 IDENTIFIER      = ""[A-Z_][A-Z_0-9]*"";
 WHITESPACE      = ""\s+"";
 
@@ -266,14 +266,14 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                         Func<Customer, bool> func = (row) =>
                         {
                             var pi = row.GetType().GetProperty(column)!;
-                            var result = (pi.GetValue(row) as IComparable)!.CompareTo(op1) >= 0 && (pi.GetValue(row) as IComparable)!.CompareTo(op2) <= 0;
+                            var result = pi.GetValue(row)!.ToString()!.CompareTo(op1) >= 0 && pi.GetValue(row)!.ToString()!.CompareTo(op2) <= 0;
                             return result;
                         };
 
                         Func<Customer, bool> funcNot = (row) =>
                         {
                             var pi = row.GetType().GetProperty(column)!;
-                            var result = (pi.GetValue(row) as IComparable)!.CompareTo(op1) >= 0 && (pi.GetValue(row) as IComparable)!.CompareTo(op2) <= 0;
+                            var result = pi.GetValue(row)!.ToString()!.CompareTo(op1) >= 0 && pi.GetValue(row)!.ToString()!.CompareTo(op2) <= 0;
                             return !result;
                         };
 
@@ -347,7 +347,7 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
 
     private int StateMapper(dynamic state)
     {
-        Func<Customer, bool> func = (state.filterFunctions as Stack<Func<Customer, bool>>)!.Pop();
+        Func<Customer, bool> func = (state.FilterFunctions as Stack<Func<Customer, bool>>)!.Pop();
         var filtered = data.Where(r => func(r));
         return filtered.Count();
     }
@@ -361,13 +361,13 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
     }
 
     [Theory]
-    [InlineData("age BETWEEN 40 AND 60", 6)]
+    [InlineData("Age BETWEEN 40 AND 60", 6)]
     public void TestSqlish(string input, int expectedRows) {
         var parser = new Parser(SqlishGrammar, "search_condition");
         var ast = parser.Parse(input);
         var visitor = SqlishVisitor;
         ast.Walk(visitor);
-        var actualRows = StateMapper(visitor);
+        var actualRows = StateMapper(visitor.State);
         Assert.Equal(expectedRows, actualRows);
     }
 }
