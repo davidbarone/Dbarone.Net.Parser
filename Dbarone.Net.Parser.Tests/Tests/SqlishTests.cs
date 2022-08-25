@@ -347,8 +347,27 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
 
     private int StateMapper(dynamic state)
     {
-        let func = state.filterFunctions.pop();
-        let filtered = data.filter(func);
-        return filtered.length;
+        Func<Customer, bool> func = (state.filterFunctions as Stack<Func<Customer, bool>>)!.Pop();
+        var filtered = data.Where(r => func(r));
+        return filtered.Count();
+    }
+
+    [Fact]
+    public void CheckProductionRules(){
+        var parser = new Parser(SqlishGrammar, "search_condition");
+        var productionRules = parser.ProductionRules;
+        Assert.Equal(46, productionRules.Count());
+
+    }
+
+    [Theory]
+    [InlineData("age BETWEEN 40 AND 60", 6)]
+    public void TestSqlish(string input, int expectedRows) {
+        var parser = new Parser(SqlishGrammar, "search_condition");
+        var ast = parser.Parse(input);
+        var visitor = SqlishVisitor;
+        ast.Walk(visitor);
+        var actualRows = StateMapper(visitor);
+        Assert.Equal(expectedRows, actualRows);
     }
 }
