@@ -31,7 +31,7 @@ rule    = SIMPLE;")]
     public void TestValidGrammar(string? grammar)
     {
         // Should not throw exception
-        DoTest(grammar!, null!, null!, null!, null!);
+        DoTest<dynamic>(grammar!, null!, null!, null!, null!);
     }
 
     [Theory]
@@ -44,7 +44,7 @@ rule    = SIMPLE;")]
     [InlineData(@"test = ""ABC", "Syntax error near")]
     public void TestInvalidGrammar(string? grammar, string expectedError)
     {
-        var ex = Assert.Throws<Exception>(() => DoTest(grammar!, null!, null!, null!, null!));
+        var ex = Assert.Throws<Exception>(() => DoTest<dynamic>(grammar!, null!, null!, null!, null!));
         Assert.StartsWith(expectedError, ex.Message);
     }
 }

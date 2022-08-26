@@ -56,7 +56,7 @@ mul_div_term_   = OP:DIV_OP, factor | OP:MUL_OP, factor;
 factor          = primary | PLUS_OP, primary | MINUS_OP, primary;
 primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
 
-    public Visitor ExpressionVisitor
+    public Visitor<dynamic> ExpressionVisitor
     {
         get
         {
@@ -64,7 +64,7 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
             dynamic state = new ExpandoObject();
             state.Stack = new Stack<int>();
 
-            var visitor = new Visitor(state);
+            var visitor = new Visitor<dynamic>(state);
 
             visitor.AddVisitor(
                 "minus_plus_expr",

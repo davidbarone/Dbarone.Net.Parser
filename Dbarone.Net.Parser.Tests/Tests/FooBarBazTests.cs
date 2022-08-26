@@ -34,7 +34,7 @@ fb      = :FOO,:BAR*;
 fbb     = ITEMS:fb,ITEMS:BAZ*;
 ";
 
-    private Visitor FooBarBazVisitor
+    private Visitor<dynamic> FooBarBazVisitor
     {
         get
         {
@@ -42,7 +42,7 @@ fbb     = ITEMS:fb,ITEMS:BAZ*;
             dynamic state = new ExpandoObject();
             state.items = new List<Token>();
 
-            var visitor = new Visitor(state);
+            var visitor = new Visitor<dynamic>(state);
 
             visitor.AddVisitor(
                 "fbb",

@@ -1,9 +1,9 @@
 ﻿namespace Dbarone.Net.Parser.Tests;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using Xunit;
+using Dbarone.Net.Extensions.Reflection;
 
 public class Customer
 {
@@ -14,12 +14,16 @@ public class Customer
     public string Rating { get; set; } = default!;
 }
 
+public class SqlishState
+{
+    public Stack<int> Stack = new Stack<int>();
+    public Stack<Func<Customer, bool>> FilterFunctions = new Stack<Func<Customer, bool>>();
+}
+
 /// <summary>
 /// This test suite illustrates a very simple query language called Sqlish.
 /// This shows how a more complex grammar can be used to query & filter
-/// a dataset. Note that this is still a very simplistic example. For example
-/// the comparisons are done on a text basis - no type checking or other validation
-/// is done over a very simple syntax check of the query.
+/// a list of objects.
 /// </summary>
 public class SqlishTests : AbstractTests
 {
@@ -38,7 +42,7 @@ public class SqlishTests : AbstractTests
         new Customer{ Name= "karen", Age= 39, Country= "Australia", Sex= "F", Rating= "C" },
         new Customer{ Name= "kate", Age= 26, Country= "Germany", Sex= "F", Rating= "A" },
         new Customer{ Name= "lucy", Age= 46, Country= "Australia", Sex= "F", Rating= "A" },
-        new Customer{ Name= "brian", Age= 30, Country= "UK", Sex= "M", Rating= "C" },
+        new Customer{ Name= "brian", Age= 9, Country= "UK", Sex= "M", Rating= "C" },
         new Customer{ Name= "paul", Age= 49, Country= "USA", Sex= "M", Rating= "C" }
     };
 
@@ -92,28 +96,19 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
     /// Returns a visitor object suitable for parsing Sqlish grammar.
     /// </summary>
     /// <returns></returns>
-    private Visitor SqlishVisitor
+    private Visitor<SqlishState> SqlishVisitor
     {
         get
         {
-            // Initial state
-            dynamic state = new ExpandoObject();
-            state.Stack = new Stack<int>();
-            state.FilterFunctions = new Stack<Func<Customer, bool>>();
-            var visitor = new Visitor(state);
+            var visitor = new Visitor<SqlishState>(new SqlishState());
 
             visitor.AddVisitor(
                 "search_condition",
                 (v, n) =>
                 {
                     var funcs = new Stack<Func<Customer, bool>>();
-
-                    dynamic searchCondition = n.Properties["OR"];
-                    foreach (var item in (IEnumerable<Object>)searchCondition)
+                    foreach (var node in n.GetNodeArray("OR"))
                     {
-                        var node = item as Node;
-                        if (node == null)
-                            throw new Exception("Array element type not Node.");
                         node.Accept(v);
                         funcs.Push(v.State.FilterFunctions.Pop());
                     }
@@ -142,11 +137,8 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                 {
                     var funcs = new Stack<Func<Customer, bool>>();
 
-                    foreach (var item in (IEnumerable<Object>)n.Properties["AND"])
+                    foreach (var node in n.GetNodeArray("AND"))
                     {
-                        var node = item as Node;
-                        if (node == null)
-                            throw new Exception("Array element type not Node.");
                         node.Accept(v);
                         funcs.Push(v.State.FilterFunctions.Pop());
                     }
@@ -166,7 +158,6 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                     };
 
                     v.State.FilterFunctions.Push(func);
-
                 }
             );
 
@@ -177,10 +168,7 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                     // If CONDITION property present, then need to wrap () around condition.
                     if (n.Properties.ContainsKey("CONDITION"))
                     {
-                        var node = n.Properties["CONDITION"] as Node;
-                        if (node == null)
-                            throw new Exception("Array element type not Node.");
-
+                        var node = n.GetNode("CONDITION");
                         node.Accept(v);
                         var innerFilter = v.State.FilterFunctions.Pop();
                         v.State.FilterFunctions.Push(innerFilter);
@@ -193,35 +181,34 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                 (v, n) =>
                 {
                     bool not = n.Properties.ContainsKey("NOT");
-                    string column = (n.Properties["LHV"] as Token)!.TokenValue;
-                    string[] values = (n!.Properties["LHV"] as string[])!;
-
-                    string operatorTokenName = (n.Properties["OPERATOR"] as Token)!.TokenName;
-                    string value = (n.Properties["RHV"] as Token)!.TokenValue.Replace("'", "");
+                    string column = n.GetToken("LHV").TokenValue;
+                    string operatorTokenName = n.GetToken("OPERATOR").TokenName;
+                    string valueStr = n.GetToken("RHV").TokenValue.Replace("'", "");
 
                     Func<Customer, bool> func = (row) =>
                     {
                         bool match = false;
                         var pi = row.GetType().GetProperty(column)!;
+                        var value = pi.PropertyType == typeof(string) ? valueStr : pi.PropertyType.Parse(valueStr);
                         switch (operatorTokenName)
                         {
                             case "EQ_OP":
-                                match = (pi.GetValue(row).ToString()!.Equals(value));
+                                match = (pi.GetValue(row).Equals(value));
                                 break;
                             case "NE_OP":
-                                match = !pi.GetValue(row).ToString()!.Equals(value);
+                                match = !pi.GetValue(row).Equals(value);
                                 break;
                             case "LT_OP":
-                                match = pi.GetValue(row).ToString()!.CompareTo(value) < 0;
+                                match = (pi.GetValue(row) as IComparable).CompareTo(value) < 0;
                                 break;
                             case "LE_OP":
-                                match = pi.GetValue(row).ToString()!.CompareTo(value) <= 0;
+                                match = (pi.GetValue(row) as IComparable).CompareTo(value) <= 0;
                                 break;
                             case "GT_OP":
-                                match = pi.GetValue(row).ToString()!.CompareTo(value) > 0;
+                                match = (pi.GetValue(row) as IComparable).CompareTo(value) > 0;
                                 break;
                             case "GE_OP":
-                                match = pi.GetValue(row).ToString()!.CompareTo(value) >= 0;
+                                match = (pi.GetValue(row) as IComparable).CompareTo(value) >= 0;
                                 break;
                         }
                         return match;
@@ -236,28 +223,18 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                     (v, n) =>
                     {
                         bool not = n.Properties.ContainsKey("NOT");
-                        string column = (n.Properties["LHV"] as Token)!.TokenValue;
-                        string[] values = (n.Properties["RHV"] as string[])!;
-                        values = values.Select(v => v.Replace("'", "")).ToArray();
+                        string column = n.GetToken("LHV").TokenValue;
+                        var valuesStr = n.GetTokenArray("RHV").Select(v => v.TokenValue.Replace("'", ""));
 
                         Func<Customer, bool> func = (row) =>
                         {
                             var pi = row.GetType().GetProperty(column)!;
+                            var values = pi.PropertyType == typeof(string) ? valuesStr : valuesStr.Select(v => pi.PropertyType.Parse(v));
                             var includes = values.Contains(pi.GetValue(row));
-                            return includes;
+                            return not ? !includes : includes;
                         };
 
-                        Func<Customer, bool> funcNot = (row) =>
-                        {
-                            var pi = row.GetType().GetProperty(column)!;
-                            var includes = values.Contains(pi.GetValue(row));
-                            return !includes;
-                        };
-
-                        if (not)
-                            v.State.FilterFunctions.Push(funcNot);
-                        else
-                            v.State.FilterFunctions.Push(func);
+                        v.State.FilterFunctions.Push(func);
                     }
                 );
 
@@ -266,28 +243,20 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                     (v, n) =>
                     {
                         bool not = n.Properties.ContainsKey("NOT");
-                        string column = (n.Properties["LHV"] as Token)!.TokenValue;
-                        object op1 = (n.Properties["OP1"]! as Token)!.TokenValue.Replace(@"""", "");
-                        object op2 = (n.Properties["OP2"]! as Token)!.TokenValue.Replace(@"""", "");
+                        string column = n.GetToken("LHV").TokenValue;
+                        string op1Str = n.GetToken("OP1").TokenValue.Replace(@"'", "");
+                        string op2Str = n.GetToken("OP2").TokenValue.Replace(@"'", "");
 
                         Func<Customer, bool> func = (row) =>
                         {
                             var pi = row.GetType().GetProperty(column)!;
-                            var result = pi.GetValue(row)!.ToString()!.CompareTo(op1) >= 0 && pi.GetValue(row)!.ToString()!.CompareTo(op2) <= 0;
-                            return result;
+                            var op1 = pi.PropertyType.Parse(op1Str);
+                            var op2 = pi.PropertyType.Parse(op2Str);
+                            var result = (pi.GetValue(row) as IComparable).CompareTo(op1) >= 0 && (pi.GetValue(row) as IComparable).CompareTo(op2) <= 0;
+                            return not ? !result : result;
                         };
 
-                        Func<Customer, bool> funcNot = (row) =>
-                        {
-                            var pi = row.GetType().GetProperty(column)!;
-                            var result = pi.GetValue(row)!.ToString()!.CompareTo(op1) >= 0 && pi.GetValue(row)!.ToString()!.CompareTo(op2) <= 0;
-                            return !result;
-                        };
-
-                        if (not)
-                            v.State.FilterFunctions.Push(funcNot);
-                        else
-                            v.State.FilterFunctions.Push(func);
+                        v.State.FilterFunctions.Push(func);
                     }
                 );
 
@@ -296,27 +265,21 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                 (v, n) =>
                 {
                     bool not = n.Properties.ContainsKey("NOT");
-                    string column = (n.Properties["LHV"] as Token)!.TokenValue;
-                    string value = (n.Properties["RHV"]! as Token)!.TokenValue.Replace(@"'", "");
+                    string column = n.GetToken("LHV").TokenValue;
+                    string value = n.GetToken("RHV").TokenValue.Replace(@"'", "");
 
                     Func<Customer, bool> func = (row) =>
                     {
                         var pi = row.GetType().GetProperty(column)!;
+                        if (pi.PropertyType != typeof(string))
+                        {
+                            throw new Exception("CONTAINS predicate only supported for string data types.");
+                        }
                         var result = (pi.GetValue(row) as string)!.Contains(value);
-                        return result;
+                        return not ? !result : result;
                     };
 
-                    Func<Customer, bool> funcNot = (row) =>
-                    {
-                        var pi = row.GetType().GetProperty(column)!;
-                        var result = (pi.GetValue(row) as string)!.Contains(value);
-                        return !result;
-                    };
-
-                    if (not)
-                        v.State.FilterFunctions.Push(funcNot);
-                    else
-                        v.State.FilterFunctions.Push(func);
+                    v.State.FilterFunctions.Push(func);
                 }
             );
 
@@ -325,26 +288,16 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                 (v, n) =>
                 {
                     bool not = n.Properties.ContainsKey("NOT");
-                    string column = (n.Properties["LHV"] as Token)!.TokenValue;
+                    string column = n.GetToken("LHV").TokenValue;
 
                     Func<Customer, bool> func = (row) =>
                     {
                         var pi = row.GetType().GetProperty(column)!;
-                        var result = string.IsNullOrEmpty(pi.GetValue(row) as string);
-                        return result;
+                        var result = pi.GetValue(row) == null || string.IsNullOrEmpty(pi.GetValue(row).ToString());
+                        return not ? !result : result;
                     };
 
-                    Func<Customer, bool> funcNot = (row) =>
-                    {
-                        var pi = row.GetType().GetProperty(column)!;
-                        var result = string.IsNullOrEmpty(pi.GetValue(row) as string);
-                        return !result;
-                    };
-
-                    if (not)
-                        v.State.FilterFunctions.Push(funcNot);
-                    else
-                        v.State.FilterFunctions.Push(func);
+                    v.State.FilterFunctions.Push(func);
                 }
             );
 
@@ -383,6 +336,9 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
     [InlineData("Name NOT CONTAINS 's'", 14)]
     [InlineData("Country EQ 'UK' OR Name EQ 'david'", 4)]
     [InlineData("(Country EQ 'UK' AND Sex EQ 'F') OR (Country EQ 'Italy')", 3)]
+    [InlineData("Name IN ('mark', 'jane', 'sarah')", 3)]
+    [InlineData("Age IN (76, 39)", 2)]
+    [InlineData("Age BETWEEN 5 AND 20", 2)]
     public void TestSqlish(string input, int expectedRows)
     {
         var parser = new Parser(SqlishGrammar, "search_condition");

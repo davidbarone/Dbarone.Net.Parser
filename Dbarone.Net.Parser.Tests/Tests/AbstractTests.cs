@@ -18,7 +18,7 @@ public abstract class AbstractTests
     /// <param name="resultMapping">Mapping of result.</param>
     /// <param name="expected">Expected result.</param>
     /// <param name="expectException">The expected result.</param>
-    protected object? DoTest(string grammar, string input, string rootProductionRule, Visitor visitor, Func<dynamic, object> resultMapper)
+    protected object? DoTest<TState>(string grammar, string input, string rootProductionRule, Visitor<TState> visitor, Func<dynamic, object> resultMapper)
     {
         var parser = new Parser(grammar, rootProductionRule);
 

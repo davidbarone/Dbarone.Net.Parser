@@ -33,7 +33,7 @@ public class Node
     /// Accepts a visitor on this node.
     /// </summary>
     /// <param name="v"></param>
-    public void Accept(Visitor v)
+    public void Accept<TState>(Visitor<TState> v)
     {
         v.Visit(this);
     }
@@ -42,7 +42,7 @@ public class Node
     /// Navigates the abstract syntax tree.
     /// </summary>
     /// <param name="v">The visitor to use to walk the tree.</param>
-    public void Walk(Visitor v)
+    public void Walk<TState>(Visitor<TState> v)
     {
         this.Accept(v);
         var state = v.State;
@@ -110,4 +110,50 @@ public class Node
         }
         return output;
     }
+
+    #region Helper Methods
+
+    public Node GetNode(string propertyName) {
+        var node = this.Properties[propertyName] as Node;
+        if (node==null){
+            throw new Exception($"Property [{propertyName}] is not a Node type.");
+        }
+        return node;
+    }
+
+    public Token GetToken(string propertyName) {
+        var token = this.Properties[propertyName] as Token;
+        if (token==null){
+            throw new Exception($"Property [{propertyName}] is not a Token type.");
+        }
+        return token;
+    }
+
+    public Node[] GetNodeArray(string propertyName) {
+        var obj = this.Properties[propertyName] as IEnumerable<object>;
+        var nodes = new List<Node>();
+        foreach (var item in obj){
+            var node = item as Node;
+            if (node == null) {
+                throw new Exception($"Property [{propertyName}] must be a Node array. Not all elements are Node types.");
+            }
+            nodes.Add(node);
+        }
+        return nodes.ToArray();
+    }
+
+    public Token[] GetTokenArray(string propertyName) {
+        var obj = this.Properties[propertyName] as IEnumerable<object>;
+        var tokens = new List<Token>();
+        foreach (var item in obj){
+            var token = item as Token;
+            if (token == null) {
+                throw new Exception($"Property [{propertyName}] must be a Token array. Not all elements are Token types.");
+            }
+            tokens.Add(token);
+        }
+        return tokens.ToArray();
+    }
+
+    #endregion
 }

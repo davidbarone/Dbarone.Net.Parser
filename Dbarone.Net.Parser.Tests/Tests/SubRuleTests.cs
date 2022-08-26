@@ -30,7 +30,7 @@ public class SubRuleTests : AbstractTests
         var rootProductionRule = "expression";
         var visitor = SubRuleVisitor;
         var resultMapper = ResultMapper;
-        var actual = DoTest(grammar, input, rootProductionRule, visitor, resultMapper);
+        var actual = DoTest<dynamic>(grammar, input, rootProductionRule, visitor, resultMapper);
         Assert.Equal(expected, actual);
     }
 
@@ -48,7 +48,7 @@ term            = FACTORS:(:factor, :(OP:DIV_OP, factor | OP:MUL_OP, factor)*);
 factor          = primary | PLUS_OP, primary | MINUS_OP, primary;
 primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
 
-    public Visitor SubRuleVisitor
+    public Visitor<dynamic> SubRuleVisitor
     {
         get
         {
@@ -56,7 +56,7 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
             dynamic state = new ExpandoObject();
             state.Stack = new Stack<int>();
 
-            var visitor = new Visitor(state);
+            var visitor = new Visitor<dynamic>(state);
 
             visitor.AddVisitor(
                 "expression",

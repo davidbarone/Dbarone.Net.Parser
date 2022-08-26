@@ -7,6 +7,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+public class ParserState
+{
+    public List<ProductionRule> ProductionRules { get; set; } = new List<ProductionRule>();
+    public string CurrentRule { get; set; } = default!;
+    public int SubRules { get; set; }
+}
+
 /// <summary>
 /// Parser class which encapsulates a number of parsing functions to parse context-free grammars.
 /// </summary>
@@ -71,16 +78,13 @@ public class Parser : ILoggable
     /// <summary>
     /// Visitor to process the BNFish tree, converting BNFish into a list of ProductionRule objects.
     /// </summary>
-    private Visitor BNFVisitor
+    private Visitor<ParserState> BNFVisitor
     {
         get
         {
             // Initial state
-            dynamic state = new ExpandoObject();
-            state.ProductionRules = new List<ProductionRule>();
-            state.CurrentRule = "";
-            state.SubRules = 0;
-            var visitor = new Visitor(state);
+            ParserState state = new ParserState();
+            var visitor = new Visitor<ParserState>(state);
 
             visitor.AddVisitor(
                 "grammar",
