@@ -63,10 +63,9 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 (v, n) =>
                 {
                     int sum = 0;
-                    var nodes = (IEnumerable<Object>)n.Properties["TERMS"];
-                    foreach (var item in nodes)
+                    var nodes = n.GetNodeArray("TERMS");
+                    foreach (var node in nodes)
                     {
-                        var node = ((Node)item);
                         node.Accept(v);
 
                         if (!node.Properties.ContainsKey("OP"))
@@ -75,7 +74,7 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                         }
                         else
                         {
-                            var sign = ((Token)node.Properties["OP"]).TokenValue;
+                            var sign = node.GetToken("OP").TokenValue;
                             if (sign == "+")
                             {
                                 sum = sum + (int)v.State.Stack.Pop();
@@ -95,10 +94,9 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 (v, n) =>
                 {
                     int sum = 0;
-                    var nodes = (IEnumerable<Object>)n.Properties["FACTORS"];
-                    foreach (var item in nodes)
+                    var nodes = n.GetNodeArray("FACTORS");
+                    foreach (var node in nodes)
                     {
-                        var node = ((Node)item);
                         node.Accept(v);
 
                         if (!node.Properties.ContainsKey("OP"))
@@ -107,7 +105,7 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                         }
                         else
                         {
-                            var sign = ((Token)node.Properties["OP"]).TokenValue;
+                            var sign = node.GetToken("OP").TokenValue;
                             if (sign == "*")
                             {
                                 sum = sum * (int)v.State.Stack.Pop();
@@ -126,7 +124,7 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 "factor",
                 (v, n) =>
                 {
-                    var node = (Node)n.Properties["primary"];
+                    var node = n.GetNode("primary");
                     node.Accept(v);
                     var hasMinus = n.Properties.ContainsKey("MINUS_OP");
                     int number = v.State.Stack.Pop();
@@ -142,12 +140,12 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 {
                     if (n.Properties.ContainsKey("NUMBER_LITERAL"))
                     {
-                        var number = int.Parse(((Token)n.Properties["NUMBER_LITERAL"]).TokenValue);
+                        var number = int.Parse(n.GetToken("NUMBER_LITERAL").TokenValue);
                         v.State.Stack.Push(number);
                     }
                     else
                     {
-                        var expr = (Node)n.Properties["expression"];
+                        var expr = n.GetNode("expression");
                         expr.Accept(v);
                         int result = (int)v.State.Stack.Pop();
                         v.State.Stack.Push(result);
@@ -161,10 +159,10 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 {
                     bool one = false;
                     int sum = 0;
-                    var nodes = (IEnumerable<Object>)n.Properties["FACTORS"];
+                    var nodes = n.GetNodeArray("FACTORS");
                     foreach (var node in nodes)
                     {
-                        ((Node)node).Accept(v);
+                        node.Accept(v);
                         if (!one)
                         {
                             sum = (int)v.State.Stack.Pop();
@@ -181,7 +179,6 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
                 "div_term",
                 (v, n) =>
                 {
-
                     var hasMinus = n.Properties.ContainsKey("MINUS_OP");
                     int number = v.State.Stack.Pop();
                     if (hasMinus)

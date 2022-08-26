@@ -28,7 +28,7 @@ public abstract class AbstractTests
             if (visitor != null)
             {
                 ast.Walk(visitor);
-                var actual = resultMapper(visitor.State);
+                var actual = resultMapper(visitor.State!);
                 return actual;
             }
         }

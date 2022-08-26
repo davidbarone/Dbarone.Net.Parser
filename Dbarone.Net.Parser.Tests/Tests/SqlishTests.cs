@@ -193,22 +193,22 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                         switch (operatorTokenName)
                         {
                             case "EQ_OP":
-                                match = (pi.GetValue(row).Equals(value));
+                                match = (pi.GetValue(row)!.Equals(value));
                                 break;
                             case "NE_OP":
-                                match = !pi.GetValue(row).Equals(value);
+                                match = !pi.GetValue(row)!.Equals(value);
                                 break;
                             case "LT_OP":
-                                match = (pi.GetValue(row) as IComparable).CompareTo(value) < 0;
+                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) < 0;
                                 break;
                             case "LE_OP":
-                                match = (pi.GetValue(row) as IComparable).CompareTo(value) <= 0;
+                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) <= 0;
                                 break;
                             case "GT_OP":
-                                match = (pi.GetValue(row) as IComparable).CompareTo(value) > 0;
+                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) > 0;
                                 break;
                             case "GE_OP":
-                                match = (pi.GetValue(row) as IComparable).CompareTo(value) >= 0;
+                                match = (pi.GetValue(row) as IComparable)!.CompareTo(value) >= 0;
                                 break;
                         }
                         return match;
@@ -252,7 +252,7 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                             var pi = row.GetType().GetProperty(column)!;
                             var op1 = pi.PropertyType.Parse(op1Str);
                             var op2 = pi.PropertyType.Parse(op2Str);
-                            var result = (pi.GetValue(row) as IComparable).CompareTo(op1) >= 0 && (pi.GetValue(row) as IComparable).CompareTo(op2) <= 0;
+                            var result = (pi.GetValue(row) as IComparable)!.CompareTo(op1) >= 0 && (pi.GetValue(row) as IComparable)!.CompareTo(op2) <= 0;
                             return not ? !result : result;
                         };
 
@@ -293,7 +293,7 @@ search_condition    =   OR:boolean_term, OR:search_factor*;";
                     Func<Customer, bool> func = (row) =>
                     {
                         var pi = row.GetType().GetProperty(column)!;
-                        var result = pi.GetValue(row) == null || string.IsNullOrEmpty(pi.GetValue(row).ToString());
+                        var result = pi.GetValue(row) == null || string.IsNullOrEmpty(pi.GetValue(row)!.ToString());
                         return not ? !result : result;
                     };
 
