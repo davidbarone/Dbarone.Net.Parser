@@ -78,10 +78,39 @@ public class ParserContext
         }
     }
 
+
+    private int _bestTokenIndex = default!;
+
+    /// <summary>
+    /// Readonly property to get the best token index reached. This is to provide feedback
+    /// to user if unable to fully parse input. Gets the best attempt, and returns information
+    /// about tokens at this position.
+    /// </summary>
+    public int BestTokenIndex
+    {
+        get
+        {
+            return _bestTokenIndex;
+        }
+    }
+
+    private int _currentTokenIndex = default!;
+
     /// <summary>
     /// Pointer to current token position.
     /// </summary>
-    public int CurrentTokenIndex { get; set; }
+    public int CurrentTokenIndex
+    {
+        get
+        {
+            return _currentTokenIndex;
+        }
+        set
+        {
+            _currentTokenIndex = value;
+            if (value > _bestTokenIndex) { _bestTokenIndex = value; }
+        }
+    }
 
     /// <summary>
     /// Attempts to get the next token. If the next TokenName matches

@@ -25,16 +25,19 @@ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;";
     {
 
         var expected = @"+- expression
-   +- term
-   |  +- factor
-   |     +- primary
-   |        +- ""NUMBER_LITERAL"" NUMBER_LITERAL [9]
-   +- anonymous_1
-      +- ""OP"" PLUS_OP [+]
+   +- ""TERMS"" []
       +- term
-         +- factor
-            +- primary
-               +- ""NUMBER_LITERAL"" NUMBER_LITERAL [5]
+      |  +- ""FACTORS"" []
+      |     +- factor
+      |        +- primary
+      |           +- ""NUMBER_LITERAL"" NUMBER_LITERAL [9]
+      +- anonymous_1
+         +- ""OP"" PLUS_OP [+]
+         +- term
+            +- ""FACTORS"" []
+               +- factor
+                  +- primary
+                     +- ""NUMBER_LITERAL"" NUMBER_LITERAL [5]
 ";
 
         var input = "9+5";

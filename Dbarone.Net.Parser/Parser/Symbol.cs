@@ -159,7 +159,7 @@ public class Symbol : ILoggable
                     var rules = context
                         .ProductionRules
                         .Where(r => r.RuleType == RuleType.ParserRule)
-                        .Where(r => r.Name.Equals(Name, StringComparison.OrdinalIgnoreCase));
+                        .Where(r => r.Name.Equals(Name, StringComparison.Ordinal));
 
                     if (!rules.Any())
                         break;

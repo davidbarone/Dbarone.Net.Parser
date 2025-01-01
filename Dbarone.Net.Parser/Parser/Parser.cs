@@ -311,17 +311,19 @@ public class Parser : ILoggable
             throw new Exception("Input yields no tokens.");
 
         // find any matching production rules.
-        var rules = productionRules.Where(p => this.RootProductionRule == null || p.Name.Equals(this.RootProductionRule, StringComparison.OrdinalIgnoreCase));
+        var rules = productionRules.Where(p => this.RootProductionRule == null || p.Name.Equals(this.RootProductionRule, StringComparison.Ordinal));
         if (!rules.Any())
             throw new Exception(string.Format("Production rule: {0} not found.", this.RootProductionRule));
 
         // try each rule. Use the first rule which succeeds.
+        int bestMatch = 0;      // use this if we cannot find any rules that completely parse the input. This will be used to generate error message.
         foreach (var rule in rules)
         {
             rule.LogHandler = this.LogHandler;
             ParserContext context = new ParserContext(productionRules, tokens);
             object obj = new object();
             var ok = rule.Parse(context, out obj);
+            if (context.BestTokenIndex > bestMatch) { bestMatch = context.BestTokenIndex; }
             if (ok && context.TokenEOF)
             {
                 return (Node)obj;
@@ -329,7 +331,9 @@ public class Parser : ILoggable
         }
 
         // should not get here...
-        throw new Exception("Input cannot be parsed. No production rules match input.");
+        // Get the 'best' (furthest) that tokens were parsed:
+        var nextTokens = string.Join(" ", tokens.Skip(bestMatch).Take(5).Select(t => $"{t.TokenValue}"));
+        throw new Exception($"Input cannot be parsed around token #{bestMatch}: '{nextTokens}'.");
     }
 
     public override string ToString()

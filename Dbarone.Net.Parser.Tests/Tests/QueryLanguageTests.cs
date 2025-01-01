@@ -34,10 +34,12 @@ DATA_TYPE_TEXT = ""\bTEXT\b"";
 DATA_TYPE_DATETIME = ""\bDATETIME\b"";
 NULL = ""\bNULL\b"";
 NOT = ""\bNOT\b"";
+TRUE = ""\bTRUE\b"";
+FALSE = ""\bFALSE\b"";
 
-
-CREATE = ""\bCREATE\b"";
-COLLECTION = ""\bCOLLECTION\b"";
+CREATETABLE = ""\bCREATETABLE\b"";
+CREATERELATION = ""\bCREATERELATION\b"";
+CREATESEQUENCE = ""\bCREATESEQUENCE\b"";
 LEFT_PAREN = ""[(]"";
 RIGHT_PAREN = ""[)]"";
 COMMA = "","";
@@ -45,13 +47,25 @@ IDENTIFIER      = ""[A-Z_][A-Z_0-9]*"";
 
 /* Parser rules */
 
+true_false = :TRUE | FALSE;
 column_name = :IDENTIFIER;
-not_null = :(:NOT, :NULL);
+null = :NULL;
+not_null = :NOT,:NULL;
+null_specifier = :(:null | :not_null);
 data_type = :DATA_TYPE_INTEGER | :DATA_TYPE_REAL | :DATA_TYPE_TEXT | :DATA_TYPE_DATETIME;
-column_definition = COLUMN_NAME:column_name, DATA_TYPE:data_type, NOT_NULL:not_null?;
-collection_element_list = LEFT_PAREN!, :column_definition, :(COMMA!, :column_definition)*, RIGHT_PAREN!;
-table_definition = CREATE!, COLLECTION!, NAME:IDENTIFIER, COLUMNS:collection_element_list;
-statement = STATEMENT:table_definition;
+
+/* CREATETABLE */
+column_definition = COLUMN_NAME:column_name, COMMA!, DATA_TYPE:data_type, COMMA!, NULL_SPECIFIER:null_specifier;
+collection_element_list = :column_definition, :(COMMA!, :column_definition)*;
+table_definition = CREATETABLE!, LEFT_PAREN!, NAME:IDENTIFIER, COMMA!, COLUMNS:collection_element_list, RIGHT_PAREN!;
+
+/* CREATERELATION */
+relation_definition = CREATERELATION!, LEFT_PAREN!, TABLE_FROM:IDENTIFIER, COMMA!, COLUMN_FROM:IDENTIFIER, COMMA!, TABLE_TO:IDENTIFIER, COMMA!, COLUMN_TO:IDENTIFIER, RIGHT_PAREN!;
+
+/* CREATESEQUENCE */
+sequence_definition = CREATESEQUENCE!, LEFT_PAREN!, NAME:IDENTIFIER, RIGHT_PAREN!;
+
+statement = STATEMENT:(:table_definition | :relation_definition | :sequence_definition);
 ";
 
     /// <summary>
@@ -72,7 +86,7 @@ statement = STATEMENT:table_definition;
     {
         var parser = new Parser(QueryLanguageGrammar, "statement");
         var productionRules = parser.ProductionRules;
-        Assert.Equal(23, productionRules.Count());
+        Assert.Equal(37, productionRules.Count());
     }
 
     /// <summary>
@@ -82,7 +96,12 @@ statement = STATEMENT:table_definition;
     /// <param name="input"></param>
     /// <param name="expectedRows"></param>
     [Theory]
-    [InlineData("CREATE COLLECTION MyCollection ( a int NOT NULL , b TEXT , c DATETIME )")]
+    [InlineData("CREATETABLE(MyTable,A,INT,NULL)")]
+    [InlineData("CREATETABLE (MyTable , a , int , NOT NULL )")]
+    [InlineData("CREATETABLE (MyTable , a , int , NULL , b , text , NULL , c , datetime , NULL )")]
+    [InlineData("CREATETABLE (MyTable , a , int ,  NOT NULL , b , TEXT, NULL , c ,  DATETIME , NULL )")]
+    [InlineData("CREATERELATION(MyChildTable, a, MyReferenceTable, a)")]
+    [InlineData("CREATESEQUENCE(MySeq)")]
     public void TestValidSyntax(string input)
     {
         var parser = new Parser(QueryLanguageGrammar, "statement");
