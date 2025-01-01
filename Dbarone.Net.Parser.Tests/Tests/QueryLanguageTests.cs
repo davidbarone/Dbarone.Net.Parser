@@ -27,12 +27,14 @@ public class QueryLanguageTests : AbstractTests
 
 /* Lexer rules */
 
+/* keywords */
 DATA_TYPE_INTEGER = ""\bINT\b"";
 DATA_TYPE_REAL = ""\bREAL\b"";
 DATA_TYPE_TEXT = ""\bTEXT\b"";
 DATA_TYPE_DATETIME = ""\bDATETIME\b"";
 NULL = ""\bNULL\b"";
 NOT = ""\bNOT\b"";
+
 
 CREATE = ""\bCREATE\b"";
 COLLECTION = ""\bCOLLECTION\b"";
@@ -43,12 +45,12 @@ IDENTIFIER      = ""[A-Z_][A-Z_0-9]*"";
 
 /* Parser rules */
 
-column_name = COLUMN_NAME:IDENTIFIER;
-not_null = :NOT, :NULL;
+column_name = :IDENTIFIER;
+not_null = :(:NOT, :NULL);
 data_type = :DATA_TYPE_INTEGER | :DATA_TYPE_REAL | :DATA_TYPE_TEXT | :DATA_TYPE_DATETIME;
-column_definition = COLUMN_NAMES:column_name, DATA_TYPE:data_type, NOT_NULL:not_null?;
-collection_element_list = LEFT_PAREN!, COLUMNS:column_definition, COLUMNS:(COMMA!, COLUMNS:column_definition)*, RIGHT_PAREN!;
-table_definition = CREATE!, COLLECTION!, COLUMNS:collection_element_list;
+column_definition = COLUMN_NAME:column_name, DATA_TYPE:data_type, NOT_NULL:not_null?;
+collection_element_list = LEFT_PAREN!, :column_definition, :(COMMA!, :column_definition)*, RIGHT_PAREN!;
+table_definition = CREATE!, COLLECTION!, NAME:IDENTIFIER, COLUMNS:collection_element_list;
 statement = STATEMENT:table_definition;
 ";
 
@@ -80,10 +82,11 @@ statement = STATEMENT:table_definition;
     /// <param name="input"></param>
     /// <param name="expectedRows"></param>
     [Theory]
-    [InlineData("CREATE COLLECTION ( a int NOT NULL, b text, c datetime )")]
+    [InlineData("CREATE COLLECTION MyCollection ( a int NOT NULL , b TEXT , c DATETIME )")]
     public void TestValidSyntax(string input)
     {
         var parser = new Parser(QueryLanguageGrammar, "statement");
         var ast = parser.Parse(input);
+        var pp = ast.PrettyPrint();
     }
 }

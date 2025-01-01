@@ -70,12 +70,16 @@ public class Node
             var childAsIEnumerable = child as IEnumerable<object>;
             if (childAsIEnumerable != null)
             {
+                // special array identifier
+                output += $"{indent}+- \"{key}\" []{Environment.NewLine}";
+                indent += "   ";
+
                 foreach (var item in childAsIEnumerable)
                 {
                     if (item as Token != null)
                     {
                         // token
-                        output += $"{indent}+- \"{key}\" {(item as Token)!.TokenName} [{(item as Token)!.TokenValue}]{Environment.NewLine}";
+                        output += $"{indent}+- {(item as Token)!.TokenName} [{(item as Token)!.TokenValue}]{Environment.NewLine}";
                     }
                     else if (item as Node != null)
                     {
@@ -113,28 +117,35 @@ public class Node
 
     #region Helper Methods
 
-    public Node GetNode(string propertyName) {
+    public Node GetNode(string propertyName)
+    {
         var node = this.Properties[propertyName] as Node;
-        if (node==null){
+        if (node == null)
+        {
             throw new Exception($"Property [{propertyName}] is not a Node type.");
         }
         return node;
     }
 
-    public Token GetToken(string propertyName) {
+    public Token GetToken(string propertyName)
+    {
         var token = this.Properties[propertyName] as Token;
-        if (token==null){
+        if (token == null)
+        {
             throw new Exception($"Property [{propertyName}] is not a Token type.");
         }
         return token;
     }
 
-    public Node[] GetNodeArray(string propertyName) {
+    public Node[] GetNodeArray(string propertyName)
+    {
         var obj = this.Properties[propertyName] as IEnumerable<object>;
         var nodes = new List<Node>();
-        foreach (var item in obj){
+        foreach (var item in obj)
+        {
             var node = item as Node;
-            if (node == null) {
+            if (node == null)
+            {
                 throw new Exception($"Property [{propertyName}] must be a Node array. Not all elements are Node types.");
             }
             nodes.Add(node);
@@ -142,12 +153,15 @@ public class Node
         return nodes.ToArray();
     }
 
-    public Token[] GetTokenArray(string propertyName) {
+    public Token[] GetTokenArray(string propertyName)
+    {
         var obj = this.Properties[propertyName] as IEnumerable<object>;
         var tokens = new List<Token>();
-        foreach (var item in obj){
+        foreach (var item in obj)
+        {
             var token = item as Token;
-            if (token == null) {
+            if (token == null)
+            {
                 throw new Exception($"Property [{propertyName}] must be a Token array. Not all elements are Token types.");
             }
             tokens.Add(token);
